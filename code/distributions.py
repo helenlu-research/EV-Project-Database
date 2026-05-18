@@ -17,8 +17,8 @@ class StaggeredEvacuationDistributions:
     """
     Generate staggered evacuation distributions for EV evacuations.
     
-    All R_ilt values are integers representing the number of EVs entering 
-    the network at time t from location i with charge level l.
+    All R_ilt values are continuous in thousand-car units in
+    the network at time t at location i with charge level l.
     
     Constraint: sum_{t} R_ilt = E_il for all i, l
     """
@@ -26,63 +26,21 @@ class StaggeredEvacuationDistributions:
     @staticmethod
     def beta_distribution(E_il, T, alpha, beta, random_state=None):
         """
-        Generate staggered evacuation distribution using Beta distribution.
-        
-        Parameters
-        ----------
-        E_il : array-like
-            Total number of EVs to evacuate from location i with charge level l.
-            Shape: (num_locations, num_charge_levels) or scalar
-        T : int
-            Number of time periods
-        alpha : float
-            Shape parameter α for Beta distribution (α > 0)
-        beta : float
-            Shape parameter β for Beta distribution (β > 0)
-        random_state : int, optional
-            Random seed for reproducibility
-            
-        Returns
-        -------
-        R_ilt : np.ndarray
-            Integer staggered evacuation distribution.
-            Shape: same as E_il, with additional dimension T at the end.
-            Example: if E_il shape is (I, L), then R_ilt shape is (I, L, T)
+        Generate continuous staggered evacuation distribution using Beta distribution.
+
+        R_ilt is in the same unit as E_il, i.e., thousand cars.
+        Guarantee: sum_t R_ilt = E_il for every node and charge level.
         """
-        if random_state is not None:
-            np.random.seed(random_state)
-        
-        # Convert E_il to numpy array
-        E_il = np.asarray(E_il, dtype=int)
-        original_shape = E_il.shape
-        E_il_flat = E_il.flatten()
-        
-        # Initialize output array
-        R_ilt = np.zeros((E_il_flat.shape[0], T), dtype=int)
-        
-        # Generate Beta samples for each location-charge level
-        for idx, e_il in enumerate(E_il_flat):
-            if e_il == 0:
-                # No evacuations needed
-                continue
-            
-            # Generate normalized Beta samples
-            beta_samples = np.random.beta(alpha, beta, size=T)
-            normalized_samples = beta_samples / np.sum(beta_samples)
-            
-            # Distribute E_il EVs across time periods
-            continuous_distribution = e_il * normalized_samples
-            
-            # Convert to integers ensuring sum equals E_il
-            R_ilt[idx, :] = StaggeredEvacuationDistributions._continuous_to_integer(
-                continuous_distribution, e_il
-            )
-        
-        # Reshape back to original dimensions + time dimension
-        output_shape = original_shape + (T,)
-        R_ilt = R_ilt.reshape(output_shape)
-        
+        E_il = np.asarray(E_il, dtype=float)
+
+        edges = np.linspace(0, 1, T + 1)
+        probs = stats.beta.cdf(edges[1:], alpha, beta) - stats.beta.cdf(edges[:-1], alpha, beta)
+        probs = probs / probs.sum()
+
+        R_ilt = E_il[..., None] * probs
+
         return R_ilt
+
     
     @staticmethod
     def _continuous_to_integer(continuous_dist, total_count):
@@ -212,10 +170,6 @@ class StaggeredEvacuationDistributions:
         """
         E_il = np.asarray(E_il)
         
-        # Check that R_ilt are integers
-        assert np.all(R_ilt == R_ilt.astype(int)), \
-            f"Scenario '{scenario_name}': R_ilt must contain only integers"
-        
         # Check that R_ilt are non-negative
         assert np.all(R_ilt >= 0), \
             f"Scenario '{scenario_name}': R_ilt must be non-negative"
@@ -285,10 +239,10 @@ class StaggeredEvacuationDistributions:
         
         return {
             "scenario": scenario_name,
-            "total_evs": int(total_evs),
+            "total_evs": float(total_evs),
             "mean_time": float(mean_time),
             "peak_time": int(peak_time),
-            "peak_value": int(peak_value),
+            "peak_value": float(peak_value),
             "time_to_80_percent": int(time_to_80_percent),
             "coefficient_of_variation": float(cv)
         }
