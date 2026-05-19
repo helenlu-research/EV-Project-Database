@@ -108,7 +108,7 @@ class StaggeredEvacuationDistributions:
             {
                 "early_evac": {"alpha": 2, "beta": 5},
                 "delayed_evac": {"alpha": 5, "beta": 2},
-                "baseline": {"alpha": 1, "beta": 1}
+                "uniform_evac": {"alpha": 1, "beta": 1}
             }
         random_state : int, optional
             Random seed for reproducibility. Applied to all scenarios.
@@ -121,7 +121,7 @@ class StaggeredEvacuationDistributions:
             {
                 "early_evac": np.array(...),
                 "delayed_evac": np.array(...),
-                "baseline": np.array(...)
+                "uniform_evac": np.array(...)
             }
         """
         results = {}
