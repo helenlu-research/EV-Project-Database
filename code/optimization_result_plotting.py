@@ -22,6 +22,9 @@ import seaborn as sns
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from matplotlib.colors import Normalize
+import matplotlib.cm as cm
+import matplotlib as mpl
+from matplotlib.pyplot import rc_context
 
 
 # =========================
@@ -78,8 +81,9 @@ def plot_capacity_map(
     coords=(-123.31, -121.98, 37.95, 38.86),
     vmin=None,
     vmax=None,
-    cmap="viridis",
+    cmap="vlag",
 ):
+    plt.close('all')
     G = build_graph(df_node, df_arc)
     pos = get_positions(df_node)
 
@@ -94,10 +98,81 @@ def plot_capacity_map(
 
     norm = Normalize(vmin=vmin, vmax=vmax)
 
-    fig = plt.figure(figsize=(10, 7))
-    ax = plt.axes(projection=ccrs.Mercator())
+    # with rc_context({'figure.figsize': (10,7), 'font.size':12}):
+        
+    #     # # basemap drawing
+    #     # m.drawcounties()
+    #     # m.drawcoastlines()
+    #     # m.drawlsmask(resolution = 'i') #land_color = "#ddaa66", ocean_color="#7777ff",
+        
+    #     # # draw a map scale
+    #     # m.drawmapscale(
+    #     #     coords[0]+0.2, coords[1]+0.2,
+    #     #     coords[0], coords[1],
+    #     #     20.,
+    #     #     units='mi')
+        
+    #     fig = plt.figure(figsize=(10, 7))
+    #     ax = fig.add_subplot(1, 1, 1, projection=ccrs.Mercator())
+    #     min_lon, max_lon, min_lat, max_lat = coords
+    #     ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
 
-    ax.set_extent(coords, crs=ccrs.PlateCarree())
+    #     ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
+    #     ax.add_feature(cfeature.BORDERS, linewidth=0.5)
+    #     ax.add_feature(cfeature.LAND, alpha=0.1)
+    #     ax.add_feature(cfeature.OCEAN, alpha=0.05)
+        
+    #     #draw network with node color
+    #     nx.draw_networkx(G,pos,node_size=300,node_color=node_values,cmap=cmap,
+    #                     with_labels=True, font_size=14
+    #                     )
+
+    #     norm = Normalize(vmin=vmin, vmax=vmax)
+    #     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    #     # sm = plt.cm.ScalarMappable(cmap=cmap, norm=LogNorm(vmin=1, vmax=np.exp(3)))
+    #     sm._A = []
+    #     # ax = plt.gca()
+    #     # divider = make_axes_locatable(ax)
+    #     # cax = divider.append_axes("right", size="4%", pad=0.05)
+        
+    #     # plot labels
+    #     i = 0
+    #     for n in nodes:
+    #         x, y = pos[n]
+    #         val = cap_dict.get(n, 0.0)
+    #         ax.text(x, y + 0.01, f"{val:.3f}",
+    #                 fontsize=12, ha="center",
+    #                 transform=ccrs.PlateCarree())
+        
+    #     # plt.colorbar(sm, fraction=0.046, pad=0.04, shrink=0.3)
+    #     plt.title('Charging capacity installed (in thousands of cars)')
+    #     # plt.colorbar(shrink=0.3)
+    #     # fig.colorbar(sm, orientation="verticle")
+    #     # plt.tight_layout()
+        
+    #     # cbar = plt.colorbar(sc, ax=ax, fraction=0.035, pad=0.04)
+    #     # cbar.set_label("Charging capacity (thousand cars)")
+
+    #     # ax.set_title(f"{scenario_name}\nInstalled charging capacity")
+
+    #     # ax.set_xlim(min_lon, max_lon)
+    #     # ax.set_ylim(min_lat, max_lat)
+
+    #     plt.tight_layout()
+
+    #     if save_path:
+    #         plt.savefig(save_path, dpi=300, bbox_inches="tight")
+
+    #     plt.show()
+
+
+
+    # fig = plt.figure(figsize=(10, 7))
+    # ax = plt.axes(projection=ccrs.Mercator())
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.Mercator())
+    min_lon, max_lon, min_lat, max_lat = coords
+    ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
 
     ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
     ax.add_feature(cfeature.BORDERS, linewidth=0.5)
@@ -116,14 +191,15 @@ def plot_capacity_map(
         )
 
     # nodes
+    cmap_obj=sns.color_palette(cmap, as_cmap=True)
     sc = ax.scatter(
         [pos[n][0] for n in nodes],
         [pos[n][1] for n in nodes],
         c=node_values,
-        cmap=cmap,
+        cmap=cmap_obj,
         norm=norm,
-        s=80,
-        edgecolor="black",
+        s=180,
+        edgecolor=None,
         transform=ccrs.PlateCarree(),
         zorder=3,
     )
@@ -132,14 +208,22 @@ def plot_capacity_map(
     for n in nodes:
         x, y = pos[n]
         val = cap_dict.get(n, 0.0)
-        ax.text(x, y + 0.01, f"{val:.2f}",
-                fontsize=8, ha="center",
+        ax.text(x, y + 0.015, f"{val:.3f}",
+                fontsize=10, ha="center",
                 transform=ccrs.PlateCarree())
+        ax.text(x, y, str(n),
+            fontsize=10, ha="center", va="center",
+            color="black", fontweight="bold",
+            transform=ccrs.PlateCarree(),
+            zorder=5)
 
-    cbar = plt.colorbar(sc, ax=ax, fraction=0.035, pad=0.04)
+    cbar = plt.colorbar(sc, ax=ax, fraction=0.035, pad=0.04, shrink=0.3)
     cbar.set_label("Charging capacity (thousand cars)")
 
     ax.set_title(f"{scenario_name}\nInstalled charging capacity")
+
+    # ax.set_xlim(min_lon, max_lon)
+    # ax.set_ylim(min_lat, max_lat)
 
     plt.tight_layout()
 
@@ -156,6 +240,7 @@ def plot_capacity_from_folder(
     df_arc,
     scenario_name=None,
     save_dir="../output/figures",
+    global_vmin=None,
     global_vmax=None,
 ):
     s_path = os.path.join(result_folder, "s_values.csv")
@@ -167,6 +252,7 @@ def plot_capacity_from_folder(
     os.makedirs(save_dir, exist_ok=True)
 
     vmax = global_vmax if global_vmax is not None else df_charcap["CharCap"].max()
+    vmin = global_vmin if global_vmin is not None else 0
 
     save_path = os.path.join(save_dir, f"{scenario_name}_capacity.png")
 
@@ -174,7 +260,8 @@ def plot_capacity_from_folder(
         df_node, df_arc, df_charcap,
         scenario_name=scenario_name,
         save_path=save_path,
-        vmax=vmax
+        vmax=vmax,
+        vmin=vmin
     )
 
 
@@ -182,12 +269,19 @@ def plot_capacity_multiple(
     result_folders,
     df_node,
     df_arc,
+    global_vmin=None,
+    global_vmax=None,
     save_dir="../output/figures"
 ):
-    vmax = 0
-    for folder in result_folders.values():
-        df = pd.read_csv(os.path.join(folder, "s_values.csv"))
-        vmax = max(vmax, df["CharCap"].max())
+    if global_vmax is not None:
+        vmax = global_vmax
+    else:
+        vmax = 0
+        for folder in result_folders.values():
+            df = pd.read_csv(os.path.join(folder, "s_values.csv"))
+            vmax = max(vmax, df["CharCap"].max())
+    vmin = global_vmin if global_vmin is not None else 0
+    
 
     figs = {}
     for name, folder in result_folders.items():
@@ -195,6 +289,7 @@ def plot_capacity_multiple(
             folder, df_node, df_arc,
             scenario_name=name,
             save_dir=save_dir,
+            global_vmin=vmin,
             global_vmax=vmax
         )
     return figs
@@ -371,10 +466,15 @@ def plot_performance(
     bars1 = axes[0].bar(labels, df["NumEvac"])
     axes[0].set_title("Evacuated EVs")
     axes[0].grid(axis="y", alpha=0.3)
+    axes[0].set_ylim(0, df['NumEvac'].max()*1.1)
+    axes[0].set_xticklabels(axes[0].get_xticklabels(), fontsize=10, rotation=45, ha='right')
 
     bars2 = axes[1].bar(labels, df["AvgTime"])
     axes[1].set_title("Average evacuation time")
     axes[1].grid(axis="y", alpha=0.3)
+    axes[1].set_ylim(0, df['AvgTime'].max()*1.1)
+    axes[1].set_xticklabels(axes[1].get_xticklabels(), fontsize=10, rotation=45, ha='right')
+
 
     # =========================
     # --- BASE CASE COMPARISON
@@ -398,7 +498,7 @@ def plot_performance(
                         f"{delta:+.1f}%",
                         ha="center",
                         va="bottom",
-                        fontsize=8,
+                        fontsize=10,
                     )
 
     plt.tight_layout()
