@@ -75,7 +75,7 @@ def plot_capacity_map(
     df_charcap,
     scenario_name="Scenario",
     save_path=None,
-    coords=(-123.31, 37.95, -121.98, 38.86),
+    coords=(-123.31, -121.98, 37.95, 38.86),
     vmin=None,
     vmax=None,
     cmap="viridis",
