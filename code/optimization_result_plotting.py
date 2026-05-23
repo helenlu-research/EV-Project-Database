@@ -25,6 +25,7 @@ from matplotlib.colors import Normalize
 import matplotlib.cm as cm
 import matplotlib as mpl
 from matplotlib.pyplot import rc_context
+from matplotlib.ticker import FormatStrFormatter
 
 
 # =========================
@@ -359,10 +360,11 @@ def plot_performance(
         rows.append({
             "Scenario": name,
             "NumEvac": num,
-            "AvgTime": avg_all
+            "AvgTime": avg # avg evac time of successfully evacuated EVs across stochastic scenarios
         })
 
     df = pd.DataFrame(rows)
+    df["AvgTime"] = df["AvgTime"] / 4   # convert to hours
 
     # =========================
     # --- ORDERING (FLEXIBLE) --
@@ -395,16 +397,17 @@ def plot_performance(
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 
     bars1 = axes[0].bar(labels, df["NumEvac"])
-    axes[0].set_title("Evacuated EVs")
+    axes[0].set_title("Evacuated EVs (thousand cars)")
     axes[0].grid(axis="y", alpha=0.3)
     axes[0].set_ylim(0, df['NumEvac'].max()*1.1)
     axes[0].set_xticklabels(axes[0].get_xticklabels(), fontsize=10, rotation=45, ha='right')
 
     bars2 = axes[1].bar(labels, df["AvgTime"])
-    axes[1].set_title("Average evacuation time")
+    axes[1].set_title("Average evacuation time (hours, successful EVs)")
     axes[1].grid(axis="y", alpha=0.3)
     axes[1].set_ylim(0, df['AvgTime'].max()*1.1)
     axes[1].set_xticklabels(axes[1].get_xticklabels(), fontsize=10, rotation=45, ha='right')
+    axes[1].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 
 
     # =========================
