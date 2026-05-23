@@ -305,7 +305,7 @@ def plot_cumulative_curve(
     ax.axhline(Total_cars, linestyle="--", color="red", label="Total EVs")
 
     ax.set_xlabel("Time (hours)")
-    ax.set_ylabel("Expected evacuated EVs")
+    ax.set_ylabel("Expected evacuated EVs (thousand cars)")
     ax.set_title("Cumulative evacuation comparison")
     ax.legend(frameon=False)
     ax.grid(alpha=0.3)
